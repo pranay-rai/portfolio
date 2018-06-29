@@ -1,5 +1,8 @@
 from django.db import models
 
 class Job(models.Model):
-    image = models.ImageField(upload_to='images/')
-    summary = models.CharField(max_length=200)
+    top_heading = models.CharField(max_length=100)
+    sub_headings = []
+
+
+
