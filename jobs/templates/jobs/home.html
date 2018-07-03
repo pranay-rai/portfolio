@@ -143,24 +143,16 @@
                         <div class="col-xs-12">
                             <ul class="leftNav nav navbar-nav">
                                 <h2> FeedReader</h2>
-
                                 {% for object in objects %}
-
                                 <li>
                                     <div class="leftNav-item-wrapper">
-                                        <a href="#" onclick="toggle_visibility('foo + {{ object.top_heading }}');"> {{ object.top_heading}}</a>
-
-                                                 <div id="foo + {{ object.top_heading }}" style="visibility: hidden">
-                                                 {% for item in objects %}
-                                                <a href=""> {{ item.sub_headings.0}}</a>
-                                                     {% endfor %}
-                                            </div>
-
-
-
+                                        <button class="collapsible" style="background-color:#003366 ; color:white; cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;"> {{ object.top_heading}}</button>
+                                                <div class = "content">
+                                                    {%  for item, link in object.sub_headings%}
+                                                    <a href="{{ link}}" > {{ item}}</a>
+                                                        {% endfor %}
+                                                </div>
                                     </div>
-
-
                                 </li>
                                 {% endfor %}
                             </ul>
@@ -255,17 +247,20 @@
     <script src="{%  static 'js/ie10-viewport-bug-workaround.js' %}"></script>
     <script type="text/javascript">
     <!--
-        function toggle_visibility(id) {
-            var e = document.getElementById(id);
-            if(e.style.visibility == "hidden")
-            {
-                e.style.visibility = "visible";
-            }
-            else
-            {
-                e.style.visibility = "hidden";
-            }
-     }
+        var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
     //-->
     </script>
 

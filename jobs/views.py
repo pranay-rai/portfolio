@@ -16,11 +16,6 @@ file_opml = 'C:\\Users\\PRRAI\\Desktop\\rssfeed.opml'
 
 
 def home(request):
-    now = 'hello'
-    words = {'hello', 'hi', 'there'}
-
-
-
     def get_top_headings(filename):
         top_headings = []
         with open(file_opml, 'rt') as f:
@@ -37,8 +32,22 @@ def home(request):
             root = tree.getroot()
         for node in root.findall('body')[0][index]:
             sub_heading = node.attrib.get('title')
+            index = sub_heading.find('-')
+            sub_heading = sub_heading[index + 2:]
             sub_headings.append(sub_heading)
+            sub_headings.sort()
         return sub_headings
+
+    def get_xml_urls(filename, index):
+        urls=[]
+        with open(filename, 'rt') as f:
+            tree = ElementTree.parse(f)
+            root = tree.getroot()
+        for node in root.findall('body')[0][index]:
+            url = node.attrib.get('htmlUrl')
+            urls.append(url)
+        return urls
+
 
     top_headings = get_top_headings(file_opml)
 
@@ -48,11 +57,16 @@ def home(request):
         q=Job()
         q.top_heading=top_headings[i]
         sub_headings = get_sub_headings(file_opml, i)
+        xml_urls = get_xml_urls(file_opml,i)
+        unique_xml = []
         unique = []
         for j in range(0, len(sub_headings)):
             unique.append(sub_headings[j])
-        q.sub_headings = unique
+            unique_xml.append(xml_urls[j])
+        q.sub_headings=zip(unique, unique_xml)
+        #q.sub_headings = unique
         objects.append(q)
+    objects.sort(key=lambda x:x.top_heading)
 
 
 
