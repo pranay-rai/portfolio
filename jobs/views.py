@@ -6,6 +6,8 @@ import urllib.request
 import requests
 from xml.etree import ElementTree
 from jobs.models import Job
+from jobs.models import Feeds
+import feedparser
 
 import sys
 
@@ -68,9 +70,31 @@ def home(request):
         objects.append(q)
     objects.sort(key=lambda x:x.top_heading)
 
+    test=[]
+    d = feedparser.parse('https://nakedsecurity.sophos.com/feed/')
+    for post in d.entries:
+        test.append(post.title)
+
+    XML_LINKS= ['https://nakedsecurity.sophos.com/feed/']
+    #for object in objects:
+       #for title,xmls in object.sub_headings:
+            #XML_LINKS.append(xmls)
+
+    Feed=[]
+
+    for links in XML_LINKS:
+        d=feedparser.parse(links)
+        for post in d.entries:
+            f = Feeds()
+            f.title = post.title
+            f.link = post.link
+            f.description = post.description
+            Feed.append(f)
 
 
-    return render(request, 'jobs\home.html', {'objects': objects})
+
+
+    return render(request, 'jobs\home.html', {'objects': objects, 'Feed': Feed})
 
 
 

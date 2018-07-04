@@ -165,12 +165,12 @@
             <a id="main-content-anchor"></a>
             <div id="main-content" role="main" class="contentPageMainColumn col-sm-9 col-md-5 col-lg-6">
                 <h1>Feeds </h1>
-
-                <p> All the feeds will be displayed here
-                </p>
-                {% for word in words %}
-
+                {% for feed in Feed %}
+                    <div style="background-color:whitesmoke;"><p> <a href="{{ feed.link }}">{{ feed.title }}</a>
+                    <br> {{ feed.description }} <br>
+                    </p></div>
                 {%  endfor %}
+
 
 
             </div>
