@@ -130,11 +130,8 @@
             <!-- googleon:all -->
             <a id="main-content-anchor"></a>
             <div id="main-content" role="main" style="position:fixed; top:50%; left:50%; width:30em; height:18em; margin-top:-9em; margin-left:-15em;">
-                <center><font size="7" style="color: #003366">BC WebCheck</font><br> v 1.0 <br> <br> <form action="results.html" method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Analyze" />
-</form></center>
+                <p> The site  <b> <a href="{{ word }}"> {{ word }} </a></b>  is <b>{{ status }}</b></p>
+                <p><a href="/"> Go Back</a> </p>
 
 
             </div>
