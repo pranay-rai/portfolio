@@ -129,11 +129,25 @@
 
             <!-- googleon:all -->
             <a id="main-content-anchor"></a>
-            <div id="main-content" role="main" style="position:fixed; top:50%; left:50%; width:30em; height:18em; margin-top:-9em; margin-left:-15em;">
-                <p> The site  <b> <a href="{{ word }}"> {{ word }} </a></b>  is <b>{{ status }}</b></p>
+            <div id="main-content" role="main" >
+                <p> <h2>Results for --->  <b> <a href="{{ word }}"> {{entity.name }} </a></b></h2> <br>
+                    Site status: <b>{{ entity.status }}</b><br>
+                    Certificate validity: <b>{{ entity.validity }}</b><br>
+                    Certificate expiry: <b>{{ entity.expiry }}</b><br>
+                    Expires in: <b>{{ entity.expiryDays }} days</b><br>
+                    Protocols Supported: <b>{{ entity.protocols }} </b><br>
+
+
+                    CipherSuites Supported : <b>{{ entity.cipherSuites | length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#cipherList"> (click to expand) </a>
+                    <div id="cipherList" class="collapse">
+                        {% for cipher in entity.cipherSuites %}
+                            <li> {{ cipher }}</li>
+                        {% endfor %}
+                    </div>
+
+
+                </p>
                 <p><a href="/"> Go Back</a> </p>
-
-
             </div>
         </div>
         <!-- PAGE CONTENT -->
