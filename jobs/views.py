@@ -42,8 +42,16 @@ def results(request):
     def checkStatus(url):
         status=''
         try:
-            r = requests.get(url, verify=True, stream=False)
-            status = 'Live'
+            headers = {
+                'User-Agent': 'Mozilla 5.0'
+            }
+            r = requests.get(url, headers=headers, allow_redirects=False)
+            if(r.status_code==200):
+                status = 'Live'
+            if(r.status_code==301 or r.status_code==302):
+                status = 'Redirected to <a href="' + r.headers['Location'] + "\">" + r.headers['Location'] + "</a>"
+        except requests.exceptions.SSLError:
+            status = 'Self-Signed Certificate'
         except requests.ConnectionError:
             status = 'Not Live'
         return status
@@ -51,8 +59,13 @@ def results(request):
     def check_ssl(url):
         validity = ''
         try:
-            req = requests.get(url, verify=True, stream=False)
+            headers = {
+                'User-Agent': 'Mozilla 5.0'
+            }
+            req = requests.get(url, headers=headers, verify=True, stream=False)
             validity = 'valid'
+        except requests.exceptions.SSLError:
+            validity = 'Self-Signed'
         except:
             validity = 'Invalid'
         return validity

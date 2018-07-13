@@ -131,7 +131,7 @@
             <a id="main-content-anchor"></a>
             <div id="main-content" role="main" >
                 <p> <h2>Results for --->  <b> <a href="{{ word }}"> {{entity.name }} </a></b></h2> <br>
-                    Site status: <b>{{ entity.status }}</b><br>
+                    Site status: <b>{%  autoescape off %}{{ entity.status }}{%  endautoescape %}</b><br>
                     Certificate validity: <b>{{ entity.validity }}</b><br>
                     Certificate expiry: <b>{{ entity.expiry }}</b><br>
                     Expires in: <b>{{ entity.expiryDays }} days</b><br>
