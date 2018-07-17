@@ -143,9 +143,14 @@
                         {% for cipher in entity.cipherSuites %}
                             <li> {{ cipher }}</li>
                         {% endfor %}
-                    </div>
-
-
+                    </div><br>
+                    Reputation: <b>{{ entity.reputation }} </b><br>
+                    Other Registered TLDs : <b>{{ entity.TLDs|length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#TLD"> (click to expand) </a>
+                     <div id="TLD" class="collapse">
+                        {% for link in entity.TLDs %}
+                            <li style="margin-left: 135px"><a href="http://{{ link }}"> {{ link }} </a></li>
+                        {% endfor %}
+                    </div><br>
                 </p>
                 <p><a href="/"> Go Back</a> </p>
             </div>

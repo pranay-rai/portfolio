@@ -8,13 +8,16 @@ import ssl, socket
 import requests
 import datetime
 import subprocess
+import re
+import tld
+
 
 
 from jobs.models import URLForm
 
 
 class Entity():
-    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites):
+    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs):
         self.name = name
         self.status = status
         self.validity = validity
@@ -22,6 +25,8 @@ class Entity():
         self.expiryDays = expiryDays
         self.protocols = protocols
         self.cipherSuites = cipherSuites
+        self.reputation = reputation
+        self.TLDs = TLDs
 
 
 def home(request):
@@ -50,8 +55,12 @@ def results(request):
                 status = 'Live'
             if(r.status_code==301 or r.status_code==302):
                 status = 'Redirected to <a href="' + r.headers['Location'] + "\">" + r.headers['Location'] + "</a>"
+            if(r.status_code>=400):
+                status = 'Timed Out Connection'
         except requests.exceptions.SSLError:
             status = 'Self-Signed Certificate'
+        except requests.exceptions.Timeout:
+            status = 'Connection Timed out'
         except requests.ConnectionError:
             status = 'Not Live'
         return status
@@ -62,32 +71,37 @@ def results(request):
             headers = {
                 'User-Agent': 'Mozilla 5.0'
             }
-            req = requests.get(url, headers=headers, verify=True, stream=False)
-            validity = 'valid'
+            req = requests.get(url, headers=headers, verify=True)
+            validity = 'Valid'
         except requests.exceptions.SSLError:
             validity = 'Self-Signed'
+        except requests.exceptions.Timeout:
+            status = 'Connection Timed out'
         except:
             validity = 'Invalid'
         return validity
 
     def expiryDate(url):
         date = ''
-        hostname = url.replace("https://","")
         try:
+            hostname = url.replace("https://", "")
             ctx = ssl.create_default_context()
             s = ctx.wrap_socket(socket.socket(), server_hostname=hostname)
+            s.settimeout(10)
             s.connect((hostname, 443))
             cert = s.getpeercert()
             date=cert['notAfter']
             date = datetime.datetime.strptime(date,"%b %d %X %Y %Z").strftime("%b %d %Y")
+        except socket.timeout:
+            date = 'Could not retreive due to timeout error '
         except:
             date = 'Could Not Retrieve'
         return date
 
     def expiryDays(url):
         days=''
-        hostname = url.replace("https://", "")
         try:
+            hostname = url.replace("https://", "")
             days = (datetime.datetime.strptime(expiryDate(url), "%b %d %Y")-datetime.datetime.now()).days
         except:
             days = "Could not retrieve"
@@ -95,8 +109,8 @@ def results(request):
 
     def findSupportedProtocols(url):
         protocols = []
-        hostname = url.replace("https://", "")
         try:
+            hostname = url.replace("https://", "")
             output = subprocess.getoutput('pysslscan scan --scan=server.preferred_ciphers --ssl2 --ssl3 --tls10 --tls11 --tls12 ' + hostname)
             for i in output.splitlines():
                 if i.__contains__('SSLv3'):
@@ -125,9 +139,10 @@ def results(request):
         return ''.join(protocols)
 
     def findSupportedCipherSuites(url):
-        hostname = url.replace("https://", "")
+
         result = []
         try:
+            hostname = url.replace("https://", "")
             output = subprocess.getoutput('pysslscan scan --scan=server.ciphers --ssl2 --ssl3 --tls10 --tls11 --tls12 ' + hostname)
             for i in output.splitlines():
                 if i.__contains__('Accepted'):
@@ -141,7 +156,53 @@ def results(request):
 
         return result
 
-    entity = Entity('', '', '', '', '', '', '')
+    def checkReputation(url):
+        reputation = ''
+        try:
+            res = tld.get_tld(url, as_object=True)
+            hostname = res.domain
+
+            website_list=[]
+            with open('C:\\Users\\PRRAI\\PycharmProjects\\portfolio\\jobs\\names.csv', 'r') as f:
+                website_list = f.readlines()
+            r = re.compile('^.*' + hostname + '.*$')
+            newList = list(filter(r.match, website_list))
+            if len(newList) !=0:
+                reputation = 'Malicious'
+            else:
+                reputation = 'Safe'
+        except:
+            reputation = 'Could not fetch'
+        return reputation
+
+    def findOtherTLDs(url):
+        TLDs = ['ca', 'com', 'uk']
+        websites = []
+        try:
+            res = tld.get_tld(url, as_object=True)
+            hostname = res.domain
+            for domain in TLDs:
+                if domain!=res.tld:
+                    try:
+                        headers = {
+                        'User-Agent': 'Mozilla 5.0'
+                         }
+                        link = 'http://' + res.domain + '.' + domain
+                        r = requests.get(link, headers=headers, allow_redirects=False, timeout = 5)
+                        if(r.status_code>=200 or r.status_code<=399):
+                            websites.append(link.replace('http://', ''))
+                        else:
+                            continue
+                    except:
+                        continue
+                else:
+                    continue
+        except:
+            websites = []
+
+        return websites
+
+    entity = Entity('', '', '', '', '', '', '', '', '')
 
     entity.name = url.replace("https://","")
     entity.status = checkStatus(url)
@@ -150,6 +211,8 @@ def results(request):
     entity.expiryDays = expiryDays(url)
     entity.protocols = findSupportedProtocols(url)
     entity.cipherSuites = findSupportedCipherSuites(url)
+    entity.reputation = checkReputation(url)
+    entity.TLDs = findOtherTLDs(url)
 
 
 
