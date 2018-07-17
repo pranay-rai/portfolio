@@ -1,3 +1,4 @@
+import nmap as nmap
 from django.shortcuts import render
 
 from django.http import HttpResponse
@@ -10,6 +11,7 @@ import datetime
 import subprocess
 import re
 import tld
+import nmap
 
 
 
@@ -17,7 +19,7 @@ from jobs.models import URLForm
 
 
 class Entity():
-    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs):
+    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs, openPorts):
         self.name = name
         self.status = status
         self.validity = validity
@@ -27,6 +29,7 @@ class Entity():
         self.cipherSuites = cipherSuites
         self.reputation = reputation
         self.TLDs = TLDs
+        self.openPorts = openPorts
 
 
 def home(request):
@@ -202,7 +205,31 @@ def results(request):
 
         return websites
 
-    entity = Entity('', '', '', '', '', '', '', '', '')
+    def findOpenPorts(url):
+        result = []
+        try:
+            res = tld.get_tld(url, as_object=True)
+            domain = res.fld
+            try:
+                ip_addr = socket.gethostbyname(domain)
+                nm = nmap.PortScanner()
+                nm.scan(ip_addr, '22-443')
+                for host in nm.all_hosts():
+                    for proto in nm[host].all_protocols():
+                        lport = nm[host][proto].keys()
+                        for port in lport:
+                            result.append('Port:<b> ' + str(port) + ' </b> State: <b>' + nm[host][proto][port]['state'] + '</b>' )
+            except:
+                print()
+        except:
+            print()
+
+        return result
+
+
+
+
+    entity = Entity('', '', '', '', '', '', '', '', '', '')
 
     entity.name = url.replace("https://","")
     entity.status = checkStatus(url)
@@ -213,6 +240,7 @@ def results(request):
     entity.cipherSuites = findSupportedCipherSuites(url)
     entity.reputation = checkReputation(url)
     entity.TLDs = findOtherTLDs(url)
+    entity.openPorts = findOpenPorts(url)
 
 
 
