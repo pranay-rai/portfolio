@@ -132,6 +132,7 @@
             <div id="main-content" role="main" style = "margin-left: 300px" >
                 <p> <h2>Results for --->  <b> <a href="{{ word }}"> {{entity.name }} </a></b></h2> <br>
                     Site status: <b>{%  autoescape off %}{{ entity.status }}{%  endautoescape %}</b><br>
+                    IP Address: <b>{{ entity.IPaddr }} </b><br>
                     Certificate validity: <b>{{ entity.validity }}</b><br>
                     Certificate expiry: <b>{{ entity.expiry }}</b><br>
                     Expires in: <b>{{ entity.expiryDays }} days</b><br>
@@ -144,8 +145,8 @@
                             <li> {{ cipher }}</li>
                         {% endfor %}
                     </div><br>
-                    Reputation: <b>{{ entity.reputation }} </b><br>
-                    Other Registered TLDs : <b>{{ entity.TLDs|length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#TLD"> (click to expand) </a>
+                    Known Reputation: <b>{{ entity.reputation }} </b><br>
+                    Similar Registered TLDs : <b>{{ entity.TLDs|length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#TLD"> (click to expand) </a>
                      <div id="TLD" class="collapse">
                         {% for link in entity.TLDs %}
                             <li style="margin-left: 135px"><a href="http://{{ link }}"> {{ link }} </a></li>

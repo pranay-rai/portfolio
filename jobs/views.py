@@ -19,7 +19,7 @@ from jobs.models import URLForm
 
 
 class Entity():
-    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs, openPorts):
+    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs, openPorts, IPaddr):
         self.name = name
         self.status = status
         self.validity = validity
@@ -30,6 +30,7 @@ class Entity():
         self.reputation = reputation
         self.TLDs = TLDs
         self.openPorts = openPorts
+        self.IPaddr = IPaddr
 
 
 def home(request):
@@ -213,7 +214,7 @@ def results(request):
             try:
                 ip_addr = socket.gethostbyname(domain)
                 nm = nmap.PortScanner()
-                nm.scan(ip_addr, '22-443')
+                nm.scan(hosts=ip_addr, arguments='-F')
                 for host in nm.all_hosts():
                     for proto in nm[host].all_protocols():
                         lport = nm[host][proto].keys()
@@ -226,10 +227,19 @@ def results(request):
 
         return result
 
+    def findIPaddr(url):
+        result = ''
+        try:
+            res = tld.get_tld(url, as_object=True)
+            domain = res.fld
+            result= socket.gethostbyname(domain)
+        except:
+            result = 'Error retrieving'
+        return result
 
 
 
-    entity = Entity('', '', '', '', '', '', '', '', '', '')
+    entity = Entity('', '', '', '', '', '', '', '', '', '', '')
 
     entity.name = url.replace("https://","")
     entity.status = checkStatus(url)
@@ -241,6 +251,7 @@ def results(request):
     entity.reputation = checkReputation(url)
     entity.TLDs = findOtherTLDs(url)
     entity.openPorts = findOpenPorts(url)
+    entity.IPaddr = findIPaddr(url)
 
 
 
