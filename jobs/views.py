@@ -1,3 +1,5 @@
+import time
+
 import nmap as nmap
 from django.shortcuts import render
 
@@ -12,6 +14,7 @@ import subprocess
 import re
 import tld
 import nmap
+import whois
 
 
 
@@ -19,7 +22,7 @@ from jobs.models import URLForm
 
 
 class Entity():
-    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs, openPorts, IPaddr):
+    def __init__(self, name, status, validity, expiry, expiryDays, protocols, cipherSuites, reputation, TLDs, openPorts, IPaddr, owner, heartbeat):
         self.name = name
         self.status = status
         self.validity = validity
@@ -31,6 +34,8 @@ class Entity():
         self.TLDs = TLDs
         self.openPorts = openPorts
         self.IPaddr = IPaddr
+        self.owner = owner
+        self.heartbeat = heartbeat
 
 
 def home(request):
@@ -47,8 +52,9 @@ def results(request):
         else:
             dataForm = URLForm()
 
-
+    start = time.time()
     def checkStatus(url):
+
         status=''
         try:
             headers = {
@@ -62,11 +68,13 @@ def results(request):
             if(r.status_code>=400):
                 status = 'Timed Out Connection'
         except requests.exceptions.SSLError:
-            status = 'Self-Signed Certificate'
+            status = 'Untrusted'
         except requests.exceptions.Timeout:
             status = 'Connection Timed out'
         except requests.ConnectionError:
             status = 'Not Live'
+        except Exception as e:
+            status = e.args
         return status
 
     def check_ssl(url):
@@ -78,7 +86,7 @@ def results(request):
             req = requests.get(url, headers=headers, verify=True)
             validity = 'Valid'
         except requests.exceptions.SSLError:
-            validity = 'Self-Signed'
+            validity = 'Untrusted'
         except requests.exceptions.Timeout:
             status = 'Connection Timed out'
         except:
@@ -237,9 +245,71 @@ def results(request):
             result = 'Error retrieving'
         return result
 
+    def findOwner(url):
+        result = []
+        try:
+            res = tld.get_tld(url, as_object=True)
+            domain = res.fld
+            d= whois.whois(domain)
+            if(d.registrant_name):
+                result.append(d.registrant_name[1])
+                result.append('Registrant name: <b>' + d.registrant_name[1] + '</b>')
+                result.append('Webmaster: <b>' + d.registrant_name[2] + '</b>')
+            if(d.emails):
+                try:
+                    if(isinstance(d.emails, list)):
+                        result.append('Email: <b>' + ' '.join(str(e) for e in d.emails) + '</b>')
+                    else:
+                        result.append('Email: <b>' + d.emails + '</b>')
+                except:
+                    pass
+            if(d.phone):
+                if (isinstance(d.phone, list)):
+                    result.append('Phone:<b> ' + ' '.join(str(e) for e in d.phone) + '</b>')
+                else:
+                    result.append('Phone:<b> ' + d.phone + '</b>')
+            if(d.domain_status):
+                result.append('Domain Status:<b> ' + d.domain_status+ '</b>')
+            if (d.updated_date):
+                result.append('Updated Date:<b>' + str(d.updated_date) + '</b>')
+            if(d.creation_date):
+                result.append('Creation Date:<b> ' + str(d.creation_date)+ '</b>')
+
+            if(d.expiration_date):
+                result.append('Expiration Date:<b> ' + str(d.expiration_date)+ '</b>')
+        except:
+            result = 'Could not fetch'
+
+        return result
+
+    def findHeartbeatVulnerability(url):
+
+        result = ''
+        try:
+            hostname = url.replace("https://", "")
+            output = subprocess.getoutput('pysslscan scan --scan=vuln.heartbleed --ssl2 --ssl3 --tls10 --tls11 --tls12 ' + hostname)
+            presence = ''
+            vulnerable = ''
+            for i in output.splitlines():
+                if i.__contains__('Heartbeat Extension present'):
+                    words = i.split()
+                    word = words[3]
+                    presence = word[word.index('m') + 1:word.rfind('\\') - 3]
+                if i.__contains__('Vulnerable'):
+                    words = i.split()
+                    word = words[1]
+                    vulnerable = word[word.index('m') + 1:word.rfind('\\') - 3]
+
+            result = "Heartbeat Extension Present : '" + presence + "' Vulnerable : '" + vulnerable + "'"
+        except:
+            result = 'Could not fetch'
+
+        return result
 
 
-    entity = Entity('', '', '', '', '', '', '', '', '', '', '')
+
+
+    entity = Entity('', '', '', '', '', '', '', '', '', '', '', '', '')
 
     entity.name = url.replace("https://","")
     entity.status = checkStatus(url)
@@ -252,9 +322,13 @@ def results(request):
     entity.TLDs = findOtherTLDs(url)
     entity.openPorts = findOpenPorts(url)
     entity.IPaddr = findIPaddr(url)
+    entity.owner = findOwner(url)
+    entity.heartbeat = findHeartbeatVulnerability(url)
+
+    end = time.time() - start
+    end = round(end,1)
 
 
-
-    return render(request, 'jobs\\results.html', {'word':url, 'entity':entity})
+    return render(request, 'jobs\\results.html', {'word':url, 'entity':entity, 'time':end})
 
 

@@ -132,6 +132,15 @@
             <div id="main-content" role="main" style = "margin-left: 300px" >
                 <p> <h2>Results for --->  <b> <a href="{{ word }}"> {{entity.name }} </a></b></h2> <br>
                     Site status: <b>{%  autoescape off %}{{ entity.status }}{%  endautoescape %}</b><br>
+                    Registered to: <b>{% autoescape off %}{{ entity.owner.0 }} {% endautoescape %}</b><a href='#!' style="text-decoration: none;" data-toggle="collapse" data-target="#whois"> (click to see more details) </a>
+                    <div id="whois" class="collapse" style="margin-left: 85px">
+                    <div class="well well-sm">
+                        {%  autoescape off %}
+                        {% for string in entity.owner|slice:"1:" %}
+                           {{ string }}<br>
+                        {% endfor %}
+                        {% endautoescape %}
+                    </div></div><br>
                     IP Address: <b>{{ entity.IPaddr }} </b><br>
                     Certificate validity: <b>{{ entity.validity }}</b><br>
                     Certificate expiry: <b>{{ entity.expiry }}</b><br>
@@ -139,12 +148,15 @@
                     Protocols Supported: <b>{{ entity.protocols }} </b><br>
 
 
+
+
                     CipherSuites Supported : <b>{{ entity.cipherSuites | length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#cipherList"> (click to expand) </a>
                     <div id="cipherList" class="collapse">
+                    <div class="well well-sm">
                         {% for cipher in entity.cipherSuites %}
                             <li> {{ cipher }}</li>
                         {% endfor %}
-                    </div><br>
+                    </div></div><br>
                     Known Reputation: <b>{{ entity.reputation }} </b><br>
                     Similar Registered TLDs : <b>{{ entity.TLDs|length }} </b><a href='#!' style="text-decoration: none" data-toggle="collapse" data-target="#TLD"> (click to expand) </a>
                      <div id="TLD" class="collapse">
@@ -159,8 +171,11 @@
                             <li style="margin-left: 60px"> {% autoescape off %}{{ ports }}{%  endautoescape %} </li>
                         {% endfor %}
                     </div><br>
+                    Heartbeat Vulnerability: <b>{{ entity.heartbeat }} </b><br>
+
                 </p>
                 <p><a href="/"> Go Back</a> </p>
+            <br><br><br> <p> The scan took <b>{{ time }} </b> seconds</p>
             </div>
         </div>
         <!-- PAGE CONTENT -->
